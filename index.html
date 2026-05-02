@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg-color: #0f172a;
-            --sidebar-bg: rgba(30, 41, 59, 0.7);
+            --sidebar-bg: #1e293b;
             --content-bg: #1e293b;
             --accent-color: #38bdf8;
             --text-primary: #f1f5f9;
@@ -23,6 +23,7 @@
             margin: 0;
             padding: 0;
             font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -33,26 +34,29 @@
             overflow: hidden;
         }
 
+        /* 側邊欄遮罩 (手機版) */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 45;
+        }
+
         /* 左側導覽列 */
         aside {
             width: var(--sidebar-width);
             min-width: var(--sidebar-width);
             background: var(--sidebar-bg);
-            backdrop-filter: blur(var(--glass-blur));
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 50;
-            overflow: hidden; /* 防止內容外溢 */
-        }
-
-        aside.collapsed {
-            width: 0;
-            min-width: 0;
-            transform: translateX(-100%);
-            border-right: none;
-            visibility: hidden; /* 完全隱藏 */
         }
 
         .sidebar-header {
@@ -70,7 +74,6 @@
             padding: 12px;
             border-bottom: 1px solid var(--border-color);
             background: rgba(56, 189, 248, 0.05);
-            overflow: hidden;
         }
 
         .favorites-title {
@@ -82,7 +85,6 @@
             display: flex;
             align-items: center;
             gap: 4px;
-            white-space: nowrap;
         }
 
         .fav-item {
@@ -118,7 +120,6 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            white-space: nowrap;
         }
 
         .law-link {
@@ -129,7 +130,6 @@
             font-size: 0.95rem;
             display: flex;
             align-items: center;
-            white-space: nowrap;
         }
 
         .law-link:hover {
@@ -148,10 +148,11 @@
             flex-direction: column;
             background: var(--bg-color);
             min-width: 0;
+            position: relative;
         }
 
         header {
-            padding: 16px 32px;
+            padding: 12px 20px;
             border-bottom: 1px solid var(--border-color);
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(8px);
@@ -161,8 +162,8 @@
         .search-row {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .sidebar-toggle {
@@ -181,30 +182,23 @@
             flex-shrink: 0;
         }
 
-        .sidebar-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--accent-color);
-        }
-
         .options-row {
             display: flex;
             align-items: center;
-            gap: 20px;
-            font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            padding-left: 52px; /* 這裡的 52px = 收合按鈕 40px + 間距 12px */
+            padding-left: 48px;
         }
 
         .checkbox-group {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             cursor: pointer;
             user-select: none;
-        }
-
-        .checkbox-group input {
-            cursor: pointer;
+            white-space: nowrap;
         }
 
         .search-wrapper {
@@ -216,27 +210,29 @@
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
-            padding: 12px 16px;
-            border-radius: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
             color: white;
-            font-size: 1rem;
+            font-size: 0.95rem;
             outline: none;
-            transition: border-color 0.3s;
         }
 
         input[type="text"]:focus {
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
         }
 
         .btn {
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
             border: none;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.2s;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9rem;
         }
 
         .btn-primary {
@@ -244,82 +240,181 @@
             color: var(--bg-color);
         }
 
-        .btn-primary:hover {
-            filter: brightness(1.1);
-            transform: translateY(-1px);
-        }
-
         /* 內容區 */
         #content-area {
             flex: 1;
             overflow-y: auto;
-            padding: 40px;
+            padding: 20px;
             max-width: 900px;
             margin: 0 auto;
             width: 100%;
             line-height: 1.8;
+            transition: opacity 0.25s ease;
+        }
+
+        #content-area.loading {
+            opacity: 0;
         }
 
         .article-card {
             background: var(--content-bg);
             border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             position: relative;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        @keyframes pulse-highlight {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(56, 189, 248, 0);
+            }
+
+            30% {
+                transform: scale(1.01);
+                box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(56, 189, 248, 0);
+            }
+        }
+
+        .article-card.highlight-jump {
+            border-color: var(--accent-color);
+            animation: pulse-highlight 1.2s ease-out;
+            z-index: 5;
         }
 
         .law-tag {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             background: rgba(56, 189, 248, 0.1);
             color: var(--accent-color);
-            padding: 2px 8px;
+            padding: 1px 6px;
             border-radius: 4px;
             display: inline-block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
-        .article-title {
-            color: var(--accent-color);
-            font-size: 1.25rem;
-            font-weight: 700;
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
         }
 
+        .article-title {
+            color: var(--accent-color);
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .article-title:hover {
+            opacity: 0.8;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mini-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .mini-btn:hover {
+            color: var(--accent-color);
+            background: rgba(56, 189, 248, 0.1);
+            border-color: var(--accent-color);
+        }
+
         .article-body {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             white-space: pre-wrap;
         }
 
         .loading-spinner {
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,.3);
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, .3);
             border-radius: 50%;
             border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        /* 側邊欄適應 Obsidian */
-        @media (max-width: 600px) {
+        /* 窄版優化 (手機 & Obsidian 側邊欄) */
+        @media (max-width: 768px) {
             aside {
-                position: absolute;
-                z-index: 100;
-                height: 100%;
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
                 transform: translateX(-100%);
+                width: 100%;
+                z-index: 100;
             }
 
             aside.open {
                 transform: translateX(0);
+            }
+
+            aside.open+.sidebar-overlay {
+                display: block;
+            }
+
+            .btn span {
+                display: none;
+                /* 隱藏按鈕文字，只留 icon */
+            }
+
+            .btn {
+                padding: 10px;
+                width: 40px;
+                height: 40px;
+                justify-content: center;
+            }
+
+            header {
+                padding: 10px 12px;
+            }
+
+            .options-row {
+                padding-left: 0;
+                justify-content: center;
+            }
+
+            #content-area {
+                padding: 12px;
+            }
+
+            .article-card {
+                padding: 16px;
+                border-radius: 12px;
             }
         }
 
@@ -337,9 +432,10 @@
 
 <body>
 
+    <div class="sidebar-overlay" onclick="toggleSidebar(false)"></div>
     <aside id="sidebar">
         <div class="sidebar-header">法典隨身助手</div>
-        
+
         <div class="favorites-section" id="fav-section">
             <div class="favorites-title">⭐ 快速跳轉</div>
             <div id="fav-list">
@@ -357,12 +453,13 @@
             <div class="search-row">
                 <button class="sidebar-toggle" onclick="toggleSidebar()" title="收合/展開側邊欄">☰</button>
                 <div class="search-wrapper">
-                    <input type="text" id="search-input" placeholder="輸入條號 (如: 199-1) 或關鍵字...">
+                    <input type="text" id="search-input" placeholder="條號 (199-1) 或關鍵字...">
                 </div>
-                <button class="btn btn-primary" id="btn-search" onclick="handleSearch()">🔍 搜尋</button>
-                <button class="btn" style="background:rgba(255,255,255,0.1); color:white" onclick="handleFullText()">📜 全文</button>
-                <button class="btn" style="background:rgba(255,255,255,0.1); color:white" onclick="handleCopy()">📋 複製</button>
+                <button class="btn btn-primary" id="btn-search" onclick="handleSearch()">🔍<span> 搜尋</span></button>
+                <button class="btn" style="background:rgba(255,255,255,0.1); color:white"
+                    onclick="handleFullText()">📜<span> 全文</span></button>
             </div>
+
             <div class="options-row">
                 <label class="checkbox-group">
                     <input type="checkbox" id="chk-include-name"> 帶入名稱
@@ -407,7 +504,7 @@
                 "中華民國刑法": "C0000001",
                 "刑事訴訟法": "C0010001",
                 "國民法官法": "A0030320",
-                "貪污治治罪條例": "C0010008",
+                "貪污治罪條例": "C0010008",
             },
             "四、商事法": {
                 "公司法": "J0080001",
@@ -430,15 +527,47 @@
             }
         };
 
+        const LAW_ALIASES = {
+            "憲": "A0000001", "憲法": "A0000001",
+            "憲增": "A0000002",
+            "憲訴": "A0030159",
+            "行程": "A0030055", "行政程序": "A0030055",
+            "行訴": "A0030154", "行政訴訟": "A0030154",
+            "國賠": "I0020004",
+            "民": "B0000001", "民法": "B0000001",
+            "民訴": "B0010001",
+            "家事": "B0010048", "家事法": "B0010048",
+            "強執": "B0010004",
+            "消保": "J0170001", "消保法": "J0170001",
+            "消保細": "J0170002",
+            "刑": "C0000001", "刑法": "C0000001",
+            "刑訴": "C0010001",
+            "國法": "A0030320",
+            "貪污": "C0010008",
+            "公司": "J0080001", "公司法": "J0080001",
+            "證交": "G0400001", "證券交易": "G0400001",
+            "保險": "G0390002", "保險法": "G0390002",
+            "票據": "G0380028", "票據法": "G0380028",
+            "商標": "J0070001", "商標法": "J0070001",
+            "專利": "J0070007", "專利法": "J0070007",
+            "專利細": "J0070008",
+            "著作": "J0070017", "著作權": "J0070017",
+            "信託": "I0020024", "信託法": "I0020024",
+            "釋": "JUDGE_B1", "釋字": "JUDGE_B1",
+            "憲判": "JUDGE_B5"
+        };
+
         let currentData = {};
         let currentLawName = "";
         let currentPCode = "";
         let globalCache = {}; // 記憶體快取
         let favorites = [];
 
-        function toggleSidebar() {
+        function toggleSidebar(force) {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
+            if (force === true) sidebar.classList.add('open');
+            else if (force === false) sidebar.classList.remove('open');
+            else sidebar.classList.toggle('open');
         }
 
         // 初始化導覽列
@@ -468,7 +597,7 @@
             try {
                 const response = await fetch('law_data/favorites.json');
                 favorites = await response.json();
-                
+
                 if (favorites.length === 0) {
                     list.innerHTML = '<div style="font-size:0.8rem; color:var(--text-secondary); padding:4px;">(暫無收藏)</div>';
                     return;
@@ -521,19 +650,42 @@
             return raw.replace(/\s+/g, '');
         }
 
-        async function loadLaw(pcode, name, element = null) {
+        async function loadLaw(pcode, name, element = null, skipInitialDisplay = false) {
+            const area = document.getElementById('content-area');
+            area.classList.add('loading'); // 開始淡出
+
             currentLawName = name;
             currentPCode = pcode;
-            
+
+            // 手機版自動關閉側邊欄
+            if (window.innerWidth <= 768) {
+                toggleSidebar(false);
+            }
+
             if (element) {
                 document.querySelectorAll('.law-link').forEach(el => el.classList.remove('active'));
                 element.classList.add('active');
-                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                element.scrollIntoView({ behavior: 'auto', block: 'nearest' });
             }
 
+            // 延遲一下讓淡出動畫有時間執行
+            await new Promise(r => setTimeout(r, 100));
+
+            const processData = (data) => {
+                currentData = {};
+                for (let key in data) {
+                    if (key !== "_metadata") currentData[key] = data[key];
+                }
+                globalCache[pcode] = currentData;
+
+                if (!skipInitialDisplay) {
+                    handleFullText();
+                }
+                setTimeout(() => area.classList.remove('loading'), 50); // 淡入
+            };
+
             if (globalCache[pcode]) {
-                currentData = globalCache[pcode];
-                handleFullText(); // 自動顯示全文
+                processData(globalCache[pcode]);
                 return true;
             }
 
@@ -541,17 +693,11 @@
                 const response = await fetch(`law_data/${pcode}.json`);
                 if (!response.ok) throw new Error("File not found");
                 const data = await response.json();
-                
-                currentData = {};
-                for (let key in data) {
-                    if (key !== "_metadata") currentData[key] = data[key];
-                }
-                globalCache[pcode] = currentData;
-                
-                handleFullText(); // 自動顯示全文
+                processData(data);
                 return true;
             } catch (e) {
                 renderMessage(`⚠️ 無法讀取資料 (${pcode}.json)`, true);
+                area.classList.remove('loading');
                 return false;
             }
         }
@@ -563,22 +709,86 @@
             const isGlobal = document.getElementById('chk-global').checked;
             const btn = document.getElementById('btn-search');
             const area = document.getElementById('content-area');
-            
+
             btn.disabled = true;
             btn.innerHTML = `<span class="loading-spinner"></span>`;
 
+            // 1. 模糊別名搜尋 (只有在非跨法搜尋時觸發，例如輸入「民184」)
+            if (!isGlobal) {
+                const fuzzyMatch = query.match(/^([\u4e00-\u9fa5]{1,4})(\d+[-\d]*)?$/);
+                if (fuzzyMatch) {
+                    const alias = fuzzyMatch[1];
+                    const articleNum = fuzzyMatch[2];
+                    const pcode = LAW_ALIASES[alias];
+
+                    if (pcode) {
+                        // 找到別名，自動加載該法規
+                        let targetLawName = "";
+                        for (const cat of Object.values(LAWS_CONFIG)) {
+                            for (const [name, pc] of Object.entries(cat)) {
+                                if (pc === pcode) { targetLawName = name; break; }
+                            }
+                        }
+
+                        if (targetLawName) {
+                            const navLink = document.querySelector(`.law-link[data-pcode="${pcode}"]`);
+
+                            // 告訴 loadLaw 不要執行內建的 handleFullText，我們要自訂
+                            await loadLaw(pcode, targetLawName, navLink, true);
+
+                            // 自行執行 handleFullText 但跳過捲動到頂部
+                            await handleFullText(true);
+
+                            if (articleNum) {
+                                let targetKey = articleNum;
+                                if (pcode.startsWith('JUDGE_')) targetKey = normalizeJudgeKey(articleNum);
+
+                                const targetCard = area.querySelector(`.article-card[data-key="${targetKey}"]`);
+                                if (targetCard) {
+                                    targetCard.scrollIntoView({ behavior: 'auto', block: 'center' });
+                                    targetCard.classList.add('highlight-jump');
+                                    setTimeout(() => targetCard.classList.remove('highlight-jump'), 2000);
+                                }
+                            }
+                            btn.disabled = false;
+                            btn.innerHTML = `🔍<span> 搜尋</span>`;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 2. 跨法檢索
             if (isGlobal) {
                 await performGlobalSearch(query);
             } else {
+                // 3. 一般法規內搜尋
                 if (!currentPCode) {
                     renderMessage("⚠️ 請先在左側選擇法規，或勾選「跨法檢索」");
                 } else {
-                    area.innerHTML = '';
                     if (currentPCode.startsWith('JUDGE_')) query = normalizeJudgeKey(query);
-                    
-                    if (currentData[query]) {
-                        renderArticle(query, currentData[query], currentLawName);
+
+                    // 檢查是否為「條號」直接跳轉 (例如輸入 100)
+                    const isDirectArticle = /^\d+$/.test(query) || /^\d+-\d+$/.test(query);
+
+                    if (isDirectArticle && currentData[query]) {
+                        if (!area.dataset.isFullText) {
+                            await handleFullText();
+                        }
+
+                        const targetCard = area.querySelector(`.article-card[data-key="${query}"]`);
+                        if (targetCard) {
+                            targetCard.scrollIntoView({
+                                behavior: 'auto',
+                                block: 'center'
+                            });
+                            targetCard.classList.add('highlight-jump');
+                            setTimeout(() => targetCard.classList.remove('highlight-jump'), 2000);
+                        }
                     } else {
+                        // 關鍵字篩選模式
+                        area.innerHTML = '';
+                        area.dataset.isFullText = "";
                         let found = 0;
                         const sortedKeys = smartSort(Object.keys(currentData));
                         for (let key of sortedKeys) {
@@ -588,32 +798,35 @@
                             }
                         }
                         if (found === 0) renderMessage(`❌ 找不到關於「${query}」的條文`);
+                        highlight(query);
                     }
                 }
             }
 
-            highlight(query);
             btn.disabled = false;
-            btn.innerHTML = `🔍 搜尋`;
+            btn.innerHTML = `🔍<span> 搜尋</span>`;
         }
 
-        async function handleFullText() {
+        async function handleFullText(skipScroll = false) {
             if (!currentPCode) return renderMessage("⚠️ 請先在左側選擇法規");
-            
+
             const area = document.getElementById('content-area');
             area.innerHTML = `<div style="color:var(--accent-color); margin-bottom:20px; font-weight:bold; border-bottom:1px solid var(--border-color); padding-bottom:10px;">📜 ${currentLawName} - 全文閱覽</div>`;
-            
+            area.dataset.isFullText = "true";
+
             const sortedKeys = smartSort(Object.keys(currentData));
             sortedKeys.forEach(key => {
                 renderArticle(key, currentData[key], currentLawName);
             });
-            area.scrollTo({ top: 0, behavior: 'smooth' });
+            if (!skipScroll) {
+                area.scrollTo({ top: 0, behavior: 'auto' });
+            }
         }
 
         async function performGlobalSearch(query) {
             const area = document.getElementById('content-area');
             area.innerHTML = `<div style="text-align:center; padding: 50px;"><span class="loading-spinner" style="width:30px; height:30px;"></span><p>正在檢索所有法規資料庫...</p></div>`;
-            
+
             let results = [];
             let allLaws = [];
             for (const laws of Object.values(LAWS_CONFIG)) {
@@ -643,18 +856,24 @@
             }
         }
 
-        function renderArticle(title, content, lawName, pcode = "") {
+        function renderArticle(key, content, lawName, pcode = "") {
             const area = document.getElementById('content-area');
             const card = document.createElement('div');
             card.className = 'article-card';
             card.dataset.lawname = lawName;
-            
-            const displayTitle = (pcode || currentPCode).startsWith('JUDGE_') ? title : `第 ${title} 條`;
+            card.dataset.key = key;
+
+            const displayTitle = (pcode || currentPCode).startsWith('JUDGE_') ? key : `第 ${key} 條`;
             const cleanContent = content.replace(/\xa0/g, ' ');
-            
+
             card.innerHTML = `
                 <div class="law-tag">${lawName}</div>
-                <div class="article-title">${displayTitle}</div>
+                <div class="article-header">
+                    <div class="article-title" onclick="copySingleArticle(this.closest('.article-card'))" title="點擊複製此條文">${displayTitle}</div>
+                    <div class="card-actions">
+                        <button class="mini-btn" onclick="copySingleArticle(this.closest('.article-card'))" title="複製此條文">📋</button>
+                    </div>
+                </div>
                 <div class="article-body">${cleanContent}</div>
             `;
             area.appendChild(card);
@@ -678,7 +897,33 @@
             document.querySelectorAll('.article-body, .article-title').forEach(el => walk(el));
         }
 
-        function handleCopy() {
+        function copySingleArticle(card) {
+            const lawName = card.dataset.lawname;
+            const title = card.querySelector('.article-title').innerText;
+            const body = card.querySelector('.article-body').innerText.replace(/\u200b/g, '');
+
+            const includeName = document.getElementById('chk-include-name').checked;
+            const useObsidian = document.getElementById('chk-obsidian').checked;
+
+            const titleLine = includeName ? `${lawName} ${title}` : title;
+            let output = "";
+
+            if (useObsidian) {
+                output = `> [!law] ${titleLine}\n`;
+                output += body.split('\n').map(line => line.trim() ? `> ${line}` : `>`).join('\n') + "\n\n";
+            } else {
+                output = `${titleLine}\n${body}\n`;
+            }
+
+            navigator.clipboard.writeText(output).then(() => {
+                const btn = card.querySelector('.mini-btn');
+                const originalText = btn.innerText;
+                btn.innerText = "✅";
+                setTimeout(() => btn.innerText = originalText, 2000);
+            });
+        }
+
+        function handleCopyAll() {
             const cards = document.querySelectorAll('.article-card');
             if (cards.length === 0) return alert("請先搜尋條文再複製");
 
@@ -690,7 +935,7 @@
                 const lawName = card.dataset.lawname;
                 const title = card.querySelector('.article-title').innerText;
                 const body = card.querySelector('.article-body').innerText.replace(/\u200b/g, '');
-                
+
                 const titleLine = includeName ? `${lawName} ${title}` : title;
 
                 if (useObsidian) {
@@ -701,11 +946,11 @@
                 }
             });
 
-            navigator.clipboard.writeText(finalOutput).then(() => {
-                const btn = event.target;
-                const originalText = btn.innerText;
-                btn.innerText = "✅ 已複製！";
-                setTimeout(() => btn.innerText = originalText, 2000);
+            navigator.clipboard.writeText(finalOutput + "\n").then(() => {
+                const btn = document.querySelector('button[onclick="handleCopyAll()"]');
+                const originalText = btn ? btn.innerHTML : "";
+                if (btn) btn.innerHTML = "✅<span> 已複製！</span>";
+                setTimeout(() => { if (btn) btn.innerHTML = originalText; }, 2000);
             });
         }
 
@@ -722,6 +967,7 @@
 
         initNav();
         initFavorites();
+        document.getElementById('search-input').focus();
     </script>
 </body>
 
