@@ -1,0 +1,6 @@
+*.py
+__pycache__/
+.venv/
+.gemini/
+.git/
+*.pyc
