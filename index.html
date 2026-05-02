@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legal Article Browser - Premium</title>
+    <title>LexKo: Taiwanese Codex Engine</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -34,6 +34,19 @@
             overflow: hidden;
         }
 
+        /* 隱藏所有捲軸但保持捲動功能 */
+        * {
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE/Edge */
+        }
+
+        *::-webkit-scrollbar {
+            display: none;
+            /* Chrome/Safari/Edge */
+        }
+
         /* 側邊欄遮罩 (手機版) */
         .sidebar-overlay {
             display: none;
@@ -55,19 +68,26 @@
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 50;
+        }
+
+        /* 桌面版收合邏輯：沒加 .open 時在窄版隱藏，在寬版則透過 margin 位移 */
+        @media (min-width: 769px) {
+            aside:not(.open) {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
         }
 
         .sidebar-header {
             padding: 24px;
-            font-size: 1.2rem;
-            font-weight: 800;
-            background: linear-gradient(to right, var(--accent-color), #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 1.4rem;
+            font-family: Georgia, "Times New Roman", serif;
+            font-weight: 700;
+            color: var(--accent-color);
             border-bottom: 1px solid var(--border-color);
             white-space: nowrap;
+            letter-spacing: 0.5px;
         }
 
         .favorites-section {
@@ -250,6 +270,8 @@
             width: 100%;
             line-height: 1.8;
             transition: opacity 0.25s ease;
+            scroll-padding-top: 20px;
+            /* 確保定位時標題不貼邊 */
         }
 
         #content-area.loading {
@@ -375,7 +397,8 @@
                 top: 0;
                 bottom: 0;
                 transform: translateX(-100%);
-                width: 100%;
+                width: 280px;
+                /* 手機版不要全螢幕寬，留一點空間點擊外面 */
                 z-index: 100;
             }
 
@@ -389,7 +412,6 @@
 
             .btn span {
                 display: none;
-                /* 隱藏按鈕文字，只留 icon */
             }
 
             .btn {
@@ -418,14 +440,84 @@
             }
         }
 
-        /* 自定義捲軸 */
-        ::-webkit-scrollbar {
-            width: 6px;
+        /* 歡迎頁面樣式 */
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 40px 20px;
         }
 
-        ::-webkit-scrollbar-thumb {
+        .welcome-logo {
+            font-size: 4.5rem;
+            font-family: "Arial Black", sans-serif;
+            font-weight: 900;
+            color: #1ABC9C;
+            margin-bottom: 5px;
+            letter-spacing: -2px;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 50px;
+            letter-spacing: 1px;
+            text-transform: capitalize;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            width: 100%;
+            max-width: 1100px;
+            /* 放寬歡迎頁寬度 */
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            border-radius: 20px;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-color);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .kbd {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            color: var(--text-primary);
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -434,7 +526,7 @@
 
     <div class="sidebar-overlay" onclick="toggleSidebar(false)"></div>
     <aside id="sidebar">
-        <div class="sidebar-header">法典隨身助手</div>
+        <div class="sidebar-header" onclick="renderMessage()" style="cursor: pointer;">LexKo Codex</div>
 
         <div class="favorites-section" id="fav-section">
             <div class="favorites-title">⭐ 快速跳轉</div>
@@ -474,15 +566,39 @@
         </header>
 
         <div id="content-area">
-            <div style="text-align: center; margin-top: 100px; color: var(--text-secondary);">
-                <h2>請從左側選擇法規</h2>
-                <p>或是直接搜尋您想查詢的條文</p>
+            <div class="welcome-container">
+                <div class="welcome-logo">LexKo</div>
+                <div class="welcome-subtitle">Taiwanese codex engine</div>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">🚀</span>
+                        <div class="feature-title">快速別名跳轉</div>
+                        <div class="feature-desc">直接搜尋 <span class="kbd">民184</span>、<span class="kbd">刑271</span> 或
+                            <span class="kbd">釋748</span>，系統將自動切換法規並精確定位條文。
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🔍</span>
+                        <div class="feature-title">智慧關鍵字檢索</div>
+                        <div class="feature-desc">支援全文搜尋與高亮顯示。勾選「跨法檢索」可一次搜尋所有本地法規資料庫。</div>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">📝</span>
+                        <div class="feature-title">Obsidian 連動優化</div>
+                        <div class="feature-desc">預設輸出為 Obsidian Callout 格式。點擊條文標題即可複製，並自動保留易讀的換行結構。</div>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">⚡</span>
+                        <div class="feature-title">極速操作體驗</div>
+                        <div class="feature-desc">移除繁雜動畫，支援 <span class="kbd">Enter</span> 鍵搜尋與瞬間定位。專為法律實務與國考設計。</div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        // 設定配置 (完整版)
         const LAWS_CONFIG = {
             "一、憲法與行政法": {
                 "中華民國憲法": "A0000001",
@@ -532,6 +648,7 @@
             "憲增": "A0000002",
             "憲訴": "A0030159",
             "行程": "A0030055", "行政程序": "A0030055",
+            "行": "A0030055", "行政": "A0030055",
             "行訴": "A0030154", "行政訴訟": "A0030154",
             "國賠": "I0020004",
             "民": "B0000001", "民法": "B0000001",
@@ -560,7 +677,7 @@
         let currentData = {};
         let currentLawName = "";
         let currentPCode = "";
-        let globalCache = {}; // 記憶體快取
+        let globalCache = {};
         let favorites = [];
 
         function toggleSidebar(force) {
@@ -570,7 +687,6 @@
             else sidebar.classList.toggle('open');
         }
 
-        // 初始化導覽列
         function initNav() {
             const nav = document.getElementById('law-nav');
             nav.innerHTML = '';
@@ -591,7 +707,6 @@
             }
         }
 
-        // 初始化收藏夾
         async function initFavorites() {
             const list = document.getElementById('fav-list');
             try {
@@ -603,7 +718,6 @@
                     return;
                 }
 
-                // 建立 PCode 轉名稱的查找表
                 const pcodeMap = {};
                 for (const laws of Object.values(LAWS_CONFIG)) {
                     for (const [name, pcode] of Object.entries(laws)) {
@@ -618,7 +732,6 @@
                     item.className = 'fav-item';
                     item.innerText = name;
                     item.onclick = () => {
-                        // 在 Treeview 中找到對應項並點擊
                         const target = document.querySelector(`.law-link[data-pcode="${pcode}"]`);
                         loadLaw(pcode, name, target);
                     };
@@ -631,33 +744,54 @@
 
         function smartSort(keys) {
             return keys.sort((a, b) => {
-                const aParts = a.split('-').map(p => parseInt(p) || 0);
-                const bParts = b.split('-').map(p => parseInt(p) || 0);
-                for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-                    if ((aParts[i] || 0) !== (bParts[i] || 0)) {
-                        return (aParts[i] || 0) - (bParts[i] || 0);
-                    }
-                }
-                return a.localeCompare(b);
+                const getScore = (str) => {
+                    const m1 = str.match(/(\d+)年憲判字第(\d+)號/);
+                    if (m1) return parseInt(m1[1]) * 10000 + parseInt(m1[2]);
+                    const m2 = str.match(/釋字第(\d+)號/);
+                    if (m2) return parseInt(m2[1]);
+                    return 0;
+                };
+                const scoreA = getScore(a);
+                const scoreB = getScore(b);
+                if (scoreA !== scoreB) return scoreA - scoreB;
+                return a.localeCompare(b, undefined, { numeric: true });
             });
         }
 
-        function normalizeJudgeKey(raw) {
-            raw = raw.trim();
-            const m_cons = raw.match(/^(\d+)[-/](\d+)$/);
+        function normalizeJudgeKey(raw, pcode) {
+            if (!raw) return "";
+            // 強制過濾所有空格，避免匹配失敗
+            raw = raw.toString().replace(/\s+/g, '');
+
+            // 處理憲法法庭 (111-1 -> 111年憲判字第1號)
+            let m_cons = raw.match(/^(\d+)[-/](\d+)$/);
             if (m_cons) return `${m_cons[1]}年憲判字第${m_cons[2]}號`;
-            if (/^\d+$/.test(raw)) return `釋字第${raw}號`;
-            return raw.replace(/\s+/g, '');
+
+            // 處理 112憲判18 -> 112年憲判字第18號
+            let m_text = raw.match(/(\d+)(?:憲判|憲判字第)?(\d+)/);
+            if (m_text && raw.includes('憲判')) return `${m_text[1]}年憲判字第${m_text[2]}號`;
+
+            // 處理釋字各種格式 (釋字771, 釋771, 771 -> 釋字第771號)
+            let m_shi = raw.match(/^(?:釋字|釋)?(?:第)?(\d+)(?:號)?$/);
+            if (m_shi) {
+                // 如果明確有「釋」或「釋字」，直接轉換
+                if (raw.includes('釋')) return `釋字第${m_shi[1]}號`;
+                // 如果只是純數字，則判斷是否在釋字區 (B1)
+                if (pcode && (pcode.includes('INTERPRETATION') || pcode.includes('B1'))) {
+                    return `釋字第${m_shi[1]}號`;
+                }
+            }
+
+            return raw;
         }
 
         async function loadLaw(pcode, name, element = null, skipInitialDisplay = false) {
             const area = document.getElementById('content-area');
-            area.classList.add('loading'); // 開始淡出
+            area.classList.add('loading');
 
             currentLawName = name;
             currentPCode = pcode;
 
-            // 手機版自動關閉側邊欄
             if (window.innerWidth <= 768) {
                 toggleSidebar(false);
             }
@@ -668,7 +802,6 @@
                 element.scrollIntoView({ behavior: 'auto', block: 'nearest' });
             }
 
-            // 延遲一下讓淡出動畫有時間執行
             await new Promise(r => setTimeout(r, 100));
 
             const processData = (data) => {
@@ -681,7 +814,10 @@
                 if (!skipInitialDisplay) {
                     handleFullText();
                 }
-                setTimeout(() => area.classList.remove('loading'), 50); // 淡入
+                setTimeout(() => area.classList.remove('loading'), 50);
+
+                // 選取後自動關閉側邊欄
+                toggleSidebar(false);
             };
 
             if (globalCache[pcode]) {
@@ -713,7 +849,6 @@
             btn.disabled = true;
             btn.innerHTML = `<span class="loading-spinner"></span>`;
 
-            // 1. 模糊別名搜尋 (只有在非跨法搜尋時觸發，例如輸入「民184」)
             if (!isGlobal) {
                 const fuzzyMatch = query.match(/^([\u4e00-\u9fa5]{1,4})(\d+[-\d]*)?$/);
                 if (fuzzyMatch) {
@@ -722,7 +857,6 @@
                     const pcode = LAW_ALIASES[alias];
 
                     if (pcode) {
-                        // 找到別名，自動加載該法規
                         let targetLawName = "";
                         for (const cat of Object.values(LAWS_CONFIG)) {
                             for (const [name, pc] of Object.entries(cat)) {
@@ -732,22 +866,28 @@
 
                         if (targetLawName) {
                             const navLink = document.querySelector(`.law-link[data-pcode="${pcode}"]`);
-
-                            // 告訴 loadLaw 不要執行內建的 handleFullText，我們要自訂
                             await loadLaw(pcode, targetLawName, navLink, true);
 
-                            // 自行執行 handleFullText 但跳過捲動到頂部
-                            await handleFullText(true);
-
-                            if (articleNum) {
-                                let targetKey = articleNum;
-                                if (pcode.startsWith('JUDGE_')) targetKey = normalizeJudgeKey(articleNum);
-
-                                const targetCard = area.querySelector(`.article-card[data-key="${targetKey}"]`);
-                                if (targetCard) {
-                                    targetCard.scrollIntoView({ behavior: 'auto', block: 'center' });
-                                    targetCard.classList.add('highlight-jump');
-                                    setTimeout(() => targetCard.classList.remove('highlight-jump'), 2000);
+                            // 司法解釋：直接單獨渲染該筆，不載入全文
+                            if (pcode.startsWith('JUDGE_')) {
+                                area.innerHTML = '';
+                                area.dataset.isFullText = "";
+                                let targetKey = normalizeJudgeKey(articleNum || query, pcode);
+                                if (currentData[targetKey]) {
+                                    renderArticle(targetKey, currentData[targetKey], currentLawName);
+                                    area.scrollTo({ top: 0, behavior: 'auto' });
+                                } else {
+                                    handleFullText(); // 顯示指南
+                                }
+                            } else {
+                                await handleFullText(true);
+                                if (articleNum) {
+                                    const targetCard = area.querySelector(`.article-card[data-key="${articleNum}"]`);
+                                    if (targetCard) {
+                                        targetCard.scrollIntoView({ behavior: 'auto', block: 'start' });
+                                        targetCard.classList.add('highlight-jump');
+                                        setTimeout(() => targetCard.classList.remove('highlight-jump'), 2000);
+                                    }
                                 }
                             }
                             btn.disabled = false;
@@ -758,35 +898,40 @@
                 }
             }
 
-            // 2. 跨法檢索
             if (isGlobal) {
                 await performGlobalSearch(query);
             } else {
-                // 3. 一般法規內搜尋
                 if (!currentPCode) {
                     renderMessage("⚠️ 請先在左側選擇法規，或勾選「跨法檢索」");
                 } else {
-                    if (currentPCode.startsWith('JUDGE_')) query = normalizeJudgeKey(query);
+                    if (currentPCode.startsWith('JUDGE_')) query = normalizeJudgeKey(query, currentPCode);
 
-                    // 檢查是否為「條號」直接跳轉 (例如輸入 100)
-                    const isDirectArticle = /^\d+$/.test(query) || /^\d+-\d+$/.test(query);
-
-                    if (isDirectArticle && currentData[query]) {
-                        if (!area.dataset.isFullText) {
-                            await handleFullText();
-                        }
-
-                        const targetCard = area.querySelector(`.article-card[data-key="${query}"]`);
-                        if (targetCard) {
-                            targetCard.scrollIntoView({
-                                behavior: 'auto',
-                                block: 'center'
-                            });
-                            targetCard.classList.add('highlight-jump');
-                            setTimeout(() => targetCard.classList.remove('highlight-jump'), 2000);
+                    if (currentData[query]) {
+                        // 司法解釋：直接單獨渲染該筆
+                        if (currentPCode.startsWith('JUDGE_')) {
+                            area.innerHTML = '';
+                            area.dataset.isFullText = "";
+                            renderArticle(query, currentData[query], currentLawName);
+                            area.scrollTo({ top: 0, behavior: 'auto' });
+                        } else {
+                            // 一般法規：確保已載入全文後跳轉
+                            if (!area.dataset.isFullText) {
+                                await handleFullText(true);
+                            }
+                            const targetCard = area.querySelector(`.article-card[data-key="${query}"]`);
+                            if (targetCard) {
+                                targetCard.scrollIntoView({ behavior: 'auto', block: 'start' });
+                                targetCard.classList.add('highlight-jump');
+                                setTimeout(() => targetCard.classList.remove('highlight-jump'), 2000);
+                            } else {
+                                // Fallback: 如果還是沒找到，就單獨渲染
+                                area.innerHTML = '';
+                                area.dataset.isFullText = "";
+                                renderArticle(query, currentData[query], currentLawName);
+                                area.scrollTo({ top: 0, behavior: 'auto' });
+                            }
                         }
                     } else {
-                        // 關鍵字篩選模式
                         area.innerHTML = '';
                         area.dataset.isFullText = "";
                         let found = 0;
@@ -797,7 +942,14 @@
                                 found++;
                             }
                         }
-                        if (found === 0) renderMessage(`❌ 找不到關於「${query}」的條文`);
+                        if (found === 0) {
+                            if (currentPCode && currentPCode.startsWith('JUDGE_')) {
+                                const isCons = currentLawName.includes('憲法法庭');
+                                renderMessage(`❌ 查無資料，請輸入確切指令。<br><br>提示：如要查找 ${isCons ? '112年憲判字第18號' : '釋字第748號'}，請輸入 <span class="kbd">${isCons ? '112-18' : '748'}</span> 或 <span class="kbd">${isCons ? '112憲判18' : '釋字748'}</span>`);
+                            } else {
+                                renderMessage(`❌ 找不到關於「${query}」的條文`);
+                            }
+                        }
                         highlight(query);
                     }
                 }
@@ -811,6 +963,38 @@
             if (!currentPCode) return renderMessage("⚠️ 請先在左側選擇法規");
 
             const area = document.getElementById('content-area');
+
+            // 司法解釋專屬指南頁面
+            if (currentPCode.startsWith('JUDGE_')) {
+                // 檢查是否為憲法法庭判決 (關鍵字判斷)
+                const isConstitutionalCourt = currentLawName.includes('憲法法庭');
+                area.innerHTML = `
+                    <div class="welcome-container" style="min-height: 50vh; padding-top: 0;">
+                        <div class="welcome-logo" style="font-size: 2.5rem;">${currentLawName}</div>
+                        <div class="welcome-subtitle">檢索指南</div>
+                        <div class="feature-grid">
+                            <div class="feature-card">
+                                <span class="feature-icon">🔍</span>
+                                <div class="feature-title">如何搜尋？</div>
+                                <div class="feature-desc">
+                                    ${isConstitutionalCourt ?
+                        '請輸入年份與序號，例如：<span class="kbd">112-18</span> 或 <span class="kbd">112憲判18</span>' :
+                        '請輸入釋字號碼，例如：<span class="kbd">748</span> 或 <span class="kbd">釋字748</span>'}
+                                    <br><br>也支援關鍵字搜尋，例如：<span class="kbd">${isConstitutionalCourt ? '強制抽血' : '同性婚姻'}</span>
+                                </div>
+                            </div>
+                            <div class="feature-card">
+                                <span class="feature-icon">⚠️</span>
+                                <div class="feature-title">效能提示</div>
+                                <div class="feature-desc">由於司法解釋文件體積較大，系統已禁用「全文閱覽」模式，請直接使用上方搜尋框進行檢索。</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                area.dataset.isFullText = "";
+                return;
+            }
+
             area.innerHTML = `<div style="color:var(--accent-color); margin-bottom:20px; font-weight:bold; border-bottom:1px solid var(--border-color); padding-bottom:10px;">📜 ${currentLawName} - 全文閱覽</div>`;
             area.dataset.isFullText = "true";
 
@@ -898,10 +1082,7 @@
         }
 
         function syncCopy(text) {
-            // 強制聚焦目前視窗 (對 Iframe 很有幫助)
             window.focus();
-
-            // 1. 嘗試傳統同步方案 (在 Iframe/Electron 中最穩定，因為它是同步的)
             const textArea = document.createElement("textarea");
             textArea.value = text;
             textArea.style.position = "fixed";
@@ -909,10 +1090,8 @@
             textArea.style.top = "0";
             textArea.style.opacity = "0";
             document.body.appendChild(textArea);
-            
             textArea.focus();
             textArea.select();
-            
             let success = false;
             try {
                 success = document.execCommand('copy');
@@ -920,13 +1099,10 @@
                 console.error('execCommand error:', err);
             }
             document.body.removeChild(textArea);
-
-            // 2. 如果傳統方案失敗，才嘗試現代 API (非同步)
             if (!success && navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).catch(err => console.error('Clipboard API error:', err));
-                return true; // 假設會成功，因為我們無法同步得知結果
+                return true;
             }
-            
             return success;
         }
 
@@ -934,20 +1110,16 @@
             const lawName = card.dataset.lawname;
             const title = card.querySelector('.article-title').innerText;
             const body = card.querySelector('.article-body').innerText.replace(/\u200b/g, '');
-
             const includeName = document.getElementById('chk-include-name').checked;
             const useObsidian = document.getElementById('chk-obsidian').checked;
-
             const titleLine = includeName ? `${lawName} ${title}` : title;
             let output = "";
-
             if (useObsidian) {
                 output = `> [!law] ${titleLine}\n`;
                 output += body.split('\n').map(line => line.trim() ? `> ${line}` : `>`).join('\n') + "\n\n";
             } else {
                 output = `${titleLine}\n${body}\n\n`;
             }
-
             const isCopied = syncCopy(output);
             if (isCopied) {
                 const btn = card.querySelector('.mini-btn');
@@ -957,40 +1129,24 @@
             }
         }
 
-        function handleCopyAll() {
-            const cards = document.querySelectorAll('.article-card');
-            if (cards.length === 0) return alert("請先搜尋條文再複製");
-
-            const includeName = document.getElementById('chk-include-name').checked;
-            const useObsidian = document.getElementById('chk-obsidian').checked;
-
-            let finalOutput = "";
-            cards.forEach(card => {
-                const lawName = card.dataset.lawname;
-                const title = card.querySelector('.article-title').innerText;
-                const body = card.querySelector('.article-body').innerText.replace(/\u200b/g, '');
-
-                const titleLine = includeName ? `${lawName} ${title}` : title;
-
-                if (useObsidian) {
-                    finalOutput += `> [!law] ${titleLine}\n`;
-                    finalOutput += body.split('\n').map(line => line.trim() ? `> ${line}` : `>`).join('\n') + "\n\n";
-                } else {
-                    finalOutput += `${titleLine}\n${body}\n\n`;
-                }
-            });
-
-            const isCopied = syncCopy(finalOutput + "\n");
-            if (isCopied) {
-                const btn = document.querySelector('button[onclick="handleCopyAll()"]');
-                const originalText = btn ? btn.innerHTML : "";
-                if (btn) btn.innerHTML = "✅<span> 已複製！</span>";
-                setTimeout(() => { if (btn) btn.innerHTML = originalText; }, 2000);
-            }
-        }
-
         function renderMessage(msg, isError = false) {
             const area = document.getElementById('content-area');
+            if (!msg) {
+                area.innerHTML = `
+                    <div class="welcome-container">
+                        <div class="welcome-logo">LexKo</div>
+                        <div class="welcome-subtitle">Taiwanese Codex Engine</div>
+                        <div class="feature-grid">
+                            <div class="feature-card">
+                                <span class="feature-icon">💡</span>
+                                <div class="feature-title">提示</div>
+                                <div class="feature-desc">您可以從左側選單選擇法規，或直接在上方搜尋框輸入關鍵字或條號。</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
             area.innerHTML = `<div style="text-align: center; margin-top: 100px; color: ${isError ? '#f87171' : 'var(--text-secondary)'};">
                 <p style="font-size: 1.1rem;">${msg}</p>
             </div>`;
