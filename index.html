@@ -1145,10 +1145,10 @@
             const metaMatch = key.match(/^\d{5}_([HA])_(.*)$/);
             // 次要支援舊版空格 Key
             const isOldStandalone = !metaMatch && key.startsWith(' ');
-            
+
             const type = metaMatch ? metaMatch[1] : (isOldStandalone ? 'H' : 'A');
             const displayID = metaMatch ? metaMatch[2] : key.trim();
-            
+
             // 只有精確匹配 TITLE 或 PREAMBLE 時才使用「前言/標題框」
             const isSpecialHeader = type === 'H' && (displayID === 'TITLE' || displayID === 'PREAMBLE');
 
@@ -1161,10 +1161,10 @@
                     card.style.borderRadius = "12px";
                     card.style.marginBottom = "30px";
                     card.style.boxShadow = "inset 0 0 20px rgba(56, 189, 248, 0.05)";
-                    
+
                     const icon = displayID === 'TITLE' ? '📖' : '📜';
                     const label = displayID === 'TITLE' ? '法規名稱' : '前言 Preamble';
-                    
+
                     card.innerHTML = `
                         <div style="font-size: 0.85rem; color: var(--accent-color); font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px;">
                             <span>${icon}</span> ${label}
@@ -1181,7 +1181,7 @@
                     card.style.marginBottom = "20px";
                     card.style.marginTop = "40px";
                     card.style.textAlign = "center";
-                    
+
                     card.innerHTML = `
                         <div style="color: var(--accent-color); font-size: 1.2rem; font-weight: 800; letter-spacing: 2px;">
                             ${displayID.replace(/.*-H-/, '')}
@@ -1192,8 +1192,8 @@
                 // --- 一般條文樣式 ---
                 // 只有當 ID 是純數字或符合條號模式時才加「第 條」
                 const isNumeric = /^\d/.test(displayID);
-                const displayTitle = (pcode || currentPCode).startsWith('JUDGE_') ? displayID : 
-                                     (isNumeric ? `第 ${displayID} 條` : displayID);
+                const displayTitle = (pcode || currentPCode).startsWith('JUDGE_') ? displayID :
+                    (isNumeric ? `第 ${displayID} 條` : displayID);
                 const cleanContent = content.replace(/\xa0/g, ' ');
 
                 card.innerHTML = `
