@@ -478,8 +478,75 @@
             font-family: "Arial Black", sans-serif;
             font-weight: 900;
             color: #1ABC9C;
-            margin-bottom: 5px;
             letter-spacing: -2px;
+            margin-bottom: 5px;
+            text-shadow: 0 10px 30px rgba(26, 188, 156, 0.3);
+        }
+
+        /* 彈窗樣式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover { color: var(--accent-color); }
+
+        .diary-item {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .diary-date {
+            color: var(--accent-color);
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .diary-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-primary);
         }
 
         .welcome-subtitle {
@@ -1328,10 +1395,37 @@
                         </div>
                         
                         <div style="margin-top: 50px; padding: 20px; border-top: 1px solid var(--border-color); width: 100%; max-width: 600px; text-align: center;">
-                            <div style="color: var(--accent-color); font-size: 0.95rem; font-weight: bold; margin-bottom: 5px;">網站開發：Dusty K</div>
+                            <div style="color: var(--accent-color); font-size: 0.95rem; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                網站開發：Dusty K 
+                                <span onclick="toggleDiary(true)" style="cursor: pointer; opacity: 0.7; font-size: 1.1rem;" title="開發者日記">📖</span>
+                            </div>
                             <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">聯絡方式：<a href="mailto:legal.dustyk@gmail.com" style="color: var(--accent-color); text-decoration: none; border-bottom: 1px dashed var(--accent-color);">legal.dustyk@gmail.com</a></div>
                             <div style="color: rgba(255, 255, 255, 0.4); font-size: 0.75rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                                資料來源均為政府網站，如：法規資料庫、憲法法庭<br>本網站僅供學術交流使用，若有任何想法，歡迎不吝賜教～
+                                資料來源均為政府網站，如：法規資料庫、憲法法庭等。<br>本網站僅供學術交流使用，若有任何想法，歡迎不吝賜教～
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="diary-modal" class="modal-overlay" onclick="toggleDiary(false)">
+                        <div class="modal-card" onclick="event.stopPropagation()">
+                            <span class="modal-close" onclick="toggleDiary(false)">×</span>
+                            <div style="font-size: 1.5rem; font-weight: 900; margin-bottom: 25px; color: var(--accent-color); display: flex; align-items: center; gap: 10px;">
+                                📖 開發者日記
+                            </div>
+                            
+                            <div class="diary-item">
+                                <div class="diary-date">2026/05/01</div>
+                                <div class="diary-text">勞動節在家沒事幹，因為想要自己搞一個 RAG Embed 模型需要一點原始資料（法規與憲判），所以寫了一個極其陽春的 Python 法規資料庫 🤔</div>
+                            </div>
+                            
+                            <div class="diary-item">
+                                <div class="diary-date">2026/05/02</div>
+                                <div class="diary-text">因為受不了 Python 的審美（我的錯我太菜寫不出好看 GUI 😭），所以轉往 HTML 發展，剛好我 Obsidian 也能掛網頁！（結果原本引以為傲的「離線」搜索，又搬回網路了哈哈哈哈 😅）</div>
+                            </div>
+                            
+                            <div class="diary-item" style="border: none;">
+                                <div class="diary-date">2026/05/03</div>
+                                <div class="diary-text">新增功能：使用者自定「收藏」法典、加入「編章節」方便檢索、模糊搜索納入「憲判字」。</div>
                             </div>
                         </div>
                     </div>
@@ -1341,6 +1435,11 @@
             area.innerHTML = `<div style="text-align: center; margin-top: 100px; color: ${isError ? '#f87171' : 'var(--text-secondary)'};">
                 <p style="font-size: 1.1rem;">${msg}</p>
             </div>`;
+        }
+
+        function toggleDiary(show) {
+            const modal = document.getElementById('diary-modal');
+            if (modal) modal.style.display = show ? 'flex' : 'none';
         }
 
         document.getElementById('search-input').addEventListener('keypress', (e) => {
