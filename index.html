@@ -514,8 +514,15 @@
         }
 
         @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .modal-close {
@@ -528,7 +535,9 @@
             transition: color 0.2s;
         }
 
-        .modal-close:hover { color: var(--accent-color); }
+        .modal-close:hover {
+            color: var(--accent-color);
+        }
 
         .diary-item {
             margin-bottom: 25px;
@@ -705,6 +714,7 @@
                 "強制執行法": "B0010004",
                 "消費者保護法": "J0170001",
                 "消費者保護法施行細則": "J0170002",
+                "土地法": "D0060001",
             },
             "三、刑法與刑事訴訟法": {
                 "中華民國刑法": "C0000001",
@@ -761,7 +771,8 @@
             "著作": "J0070017", "著作權": "J0070017",
             "信託": "I0020024", "信託法": "I0020024",
             "釋": "JUDGE_B1", "釋字": "JUDGE_B1",
-            "憲判": "JUDGE_B5"
+            "憲判": "JUDGE_B5",
+            "土": "D0060001", "土地": "D0060001"
         };
 
         let currentData = {};
