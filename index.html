@@ -1174,7 +1174,7 @@
                         </div>
                     `;
                 } else {
-                    // --- 普通編章節標題 ---
+                    // --- 普通編章節標題 (階層化樣式) ---
                     card.style.background = "transparent";
                     card.style.border = "none";
                     card.style.padding = "0";
@@ -1182,9 +1182,26 @@
                     card.style.marginTop = "40px";
                     card.style.textAlign = "center";
 
+                    const text = displayID.replace(/.*-H-/, '');
+                    let fontSize = "1.2rem";
+                    let fontWeight = "800";
+                    let opacity = "1";
+
+                    if (text.includes('編')) {
+                        fontSize = "1.45rem";
+                        fontWeight = "900";
+                    } else if (text.includes('章')) {
+                        fontSize = "1.25rem";
+                        fontWeight = "800";
+                    } else if (text.includes('節')) {
+                        fontSize = "1.05rem";
+                        fontWeight = "700";
+                        opacity = "0.93";
+                    }
+
                     card.innerHTML = `
-                        <div style="color: var(--accent-color); font-size: 1.2rem; font-weight: 800; letter-spacing: 2px;">
-                            ${displayID.replace(/.*-H-/, '')}
+                        <div style="color: var(--accent-color); font-size: ${fontSize}; font-weight: ${fontWeight}; letter-spacing: 2px; opacity: ${opacity};">
+                            ${text}
                         </div>
                     `;
                 }
@@ -1290,7 +1307,7 @@
                                 <div class="feature-title">快速定位</div>
                                 <div class="feature-desc">
                                     在上方輸入 <span class="kbd">民184</span>、<span class="kbd">刑271</span> 即可直接跳轉。<br>
-                                    支援 <span class="kbd">釋748</span> 或 <span class="kbd">112-18</span> (憲判)。
+                                    支援 <span class="kbd">釋748</span> 或 <span class="kbd">112憲判18</span>。
                                 </div>
                             </div>
                             <div class="feature-card">
@@ -1301,17 +1318,21 @@
                             <div class="feature-card">
                                 <span class="feature-icon">📋</span>
                                 <div class="feature-title">一鍵複製</div>
-                                <div class="feature-desc">點擊法條編號即可複製。支援 Obsidian Callout 格式，方便做筆記。</div>
+                                <div class="feature-desc">點擊法條編號即可複製，且支援 Obsidian Callout 格式，方便直接貼入筆記中！</div>
                             </div>
                             <div class="feature-card">
                                 <span class="feature-icon">🌐</span>
-                                <div class="feature-title">全域檢索</div>
+                                <div class="feature-title">全域跨法檢索</div>
                                 <div class="feature-desc">輸入關鍵字後按下 Enter，系統將搜尋所有已配置的法規資料庫。</div>
                             </div>
                         </div>
                         
-                        <div style="margin-top: 50px; color: var(--text-secondary); font-size: 0.9rem;">
-                            請點擊左側選單開始使用
+                        <div style="margin-top: 50px; padding: 20px; border-top: 1px solid var(--border-color); width: 100%; max-width: 600px; text-align: center;">
+                            <div style="color: var(--accent-color); font-size: 0.95rem; font-weight: bold; margin-bottom: 5px;">網站開發：Dusty K</div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">聯絡方式：<a href="mailto:legal.dustyk@gmail.com" style="color: var(--accent-color); text-decoration: none; border-bottom: 1px dashed var(--accent-color);">legal.dustyk@gmail.com</a></div>
+                            <div style="color: rgba(255, 255, 255, 0.4); font-size: 0.75rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">
+                                資料來源均為政府網站，如：法規資料庫、憲法法庭<br>本網站僅供學術交流使用，若有任何想法，歡迎不吝賜教～
+                            </div>
                         </div>
                     </div>
                 `;
